@@ -1,0 +1,38 @@
+version: "3.2"
+services:
+  node-red:
+    build: node-red
+    restart: unless-stopped
+    environment:
+        - NODE_RED_CREDENTIAL_SECRET=${NODE_RED_CREDENTIAL_SECRET} 
+    networks:
+      - backend
+    depends_on:
+      - db
+      - broker
+    ports:
+      - "1881:1880"
+  db:
+    build: db
+    env_file:
+      - .env
+        #    environment:
+        #- POSTGRES_DB=${POSTGRES_DB} 
+        #- POSTGRES_USER=${POSTGRES_USER} 
+        #- POSTGRES_PASSWORD=${POSTGRES_PASSWORD} 
+    networks:
+      - backend
+    ports:
+      - "5433:5432"
+  broker:
+    build: broker
+    restart: unless-stopped
+    ports:
+      - "1884:1883"
+      - "8884:8883"
+    networks:
+      - frontend
+      - backend
+networks:
+  frontend:
+  backend:
