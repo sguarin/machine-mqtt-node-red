@@ -2,9 +2,9 @@
 
 ## Introduction
 
-Last year I have been working on an embedded solution of remote sensing electric and physical parameters. In [this](https://sguarin.github.io/presentaciones/seguridad-mqtt/) presentation I talked about differents aproachs to correctly implement MQTT/TLS connection with authentication validation between an embedded solution and a broker. The examples were presented using ESP32 and the arduino framework.
+Last year I have been working on an embedded solution of remote sensing electric and physical parameters. In [this](https://sguarin.github.io/presentaciones/seguridad-mqtt/) presentation I talked about differents aproachs to implement MQTT/TLS connection with authentication validation between an embedded solution and a broker. The examples were presented using ESP32 and the arduino framework.
 
-The entire solution was originaly conceived as an embedded system, a python service and an ELK stack (Elasticsearch, Logstash and Kibana). Now I needed to implement an escalable flow from MQTT messages to a PostgreSQL database using Node-red, in order to adapt the embedded solution to an infrastructure currently used by the customer.
+The entire solution was originaly conceived as an embedded system, a python service and an ELK stack (Elasticsearch, Logstash and Kibana). I needed to implement an escalable flow from MQTT messages to a PostgreSQL database using Node-red, in order to adapt the embedded solution to an infrastructure currently used by the customer.
 
 The following research consists in testing sql injections via MQTT using Mosquitto, Node-red and PostgreSQL in a docker composed lab, but it can be extended to other implementations.  The messesges are received via MQTT broker, processed in Node-red and stored on a SQL database.
 
@@ -176,9 +176,14 @@ You can also test some payloads near a string parameter verifying that commands 
 
 ## Conclusion
 
+Programming with gui frameworks open the posibility to program to more public. But unoficial tutorials or documentation tend to appear substancially.
+
 In my opinion the last aproach is the more suitable for dealing with MQTT and storing in SQL databases besides is not very well documented.
+
+I hope this lab and tutorial helps to explain how injections could be performed via MQTT protocol.
 
 ## References
 
-https://www.infigo.hr/files/INFIGO-TD-2009-04_PostgreSQL_injection_ENG.pdf
+* https://owasp.org/www-community/attacks/SQL_Injection
+* https://www.infigo.hr/files/INFIGO-TD-2009-04_PostgreSQL_injection_ENG.pdf
 
