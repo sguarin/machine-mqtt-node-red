@@ -8,9 +8,9 @@ The entire solution was originaly conceived as an embedded system, a python serv
 
 The following research consists in testing sql injections via MQTT using Mosquitto, Node-red and PostgreSQL in a docker composed lab, but it can be extended to other implementations.  The messesges are received via MQTT broker, processed in Node-red and stored on a SQL database.
 
-I explored differents Node-red flows implementations found on the customer and in different tutorial and resources found on internet.
+I explored differents Node-red flows found implemented on the customer and in different tutorials and resources found on internet.
 
-I noticed that security on MQTT is not taken seriosly as in http/web. There are a lots of free and open brokers sometimes used for production. That knowledge of valid messages are available to anyone subscribed to the topic. An attacker could view and use that kwnowledge to replay the messages trying some injections.
+I noticed that security on MQTT is not taken seriously as in http/web. There are a lots of free and open brokers sometimes used for production. Knowledge of valid messages are available to anyone getting subscribed to the topic. An attacker could view and use that kwnowledge to replay the messages trying some injections.
 
 After testing against sql injections, I will present some vulnerable scenarios, mitigations and good implementations.
 
@@ -152,7 +152,7 @@ mosquitto_pub -h localhost -p 1884 -t test4 -m '{"device":"ccs811","ts":"2021-04
 Well, by definition this should be the first aproach. Separating the query from the parameters that can be injected from external entities is by definition the "defensive programming" against SQL injections.
 
 At the time of this writing, the documentation of [node-red-contrib-re-postgres](https://flows.nodered.org/node/node-red-contrib-re-postgres) mention this, but lacks of some examples.
-This is an example of building a dictionary with the parameters, and using it from the query. The dictionary keys can be referenced from the query as $key.
+This is an example of building a dictionary with the parameters and on the other hand construct the query. The dictionary keys can be referenced from the query as $key.
 
 ![Test 4](assets/test5_code.png)
 
@@ -163,13 +163,13 @@ Valid packet for testing:
 mosquitto_pub -h localhost -p 1884 -t test4 -m '{"device":"ccs811","ts":"2021-04-18 01:33:57","sensor":"co2","co2":1559,"tvoc":212,"temp":31.61,"hum":59.83,"pres":101543.27}'
 ```
 
-Rejected attacks:
+Rejected attack:
 
 ```
 mosquitto_pub -h localhost -p 1884 -t test5 -m '{"device":"ccs811","ts":"2021-04-18 01:33:57","sensor":"co2","co2":1559,"tvoc":212,"temp":31.61,"hum":59.83,"pres":"101543.27);delete from smr.air --"}'
 ```
 
-You can also test some payloads near a string parameter verifying that commands can't be injected.
+You can also test some payloads near a string parameter verifying that commands also can't be injected.
 
 ```
  ccs811 | 2021-04-18 01:33:57 |     |      |     | co2'); --     | 1559 |  212 | 31.61 | 59.83 | 101543.27 | 
@@ -178,7 +178,7 @@ You can also test some payloads near a string parameter verifying that commands 
 
 ## Conclusion
 
-Programming with gui frameworks open the posibility to program to more public. But unoficial tutorials or documentation tend to appear substancially.
+Programming with gui frameworks open the posibility to program to more public. But unoficial tutorials or documentation tend to appear substancially, in this case with lot of security conccerns.
 
 In my opinion the last aproach is the more suitable for dealing with MQTT and storing in SQL databases besides is not very well documented.
 
