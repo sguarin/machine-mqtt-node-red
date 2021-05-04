@@ -25,6 +25,8 @@ All services are exposed for academic testing purposes. You can use or adapt thi
 
 You can run the clients inside the container or you can install mosquitto and postgresql client on your computer. The commands presented uses the second aproach.
 
+The lab can be cloned from: [https://github.com/sguarin/machine-mqtt-node-red/](https://github.com/sguarin/machine-mqtt-node-red/)
+
 For each test, you can reset and start a fresh scenario by stopping (CTRL-C on docker-compose terminal) and running again:
 
 ```
