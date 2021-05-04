@@ -2,13 +2,15 @@
 
 ## Introduction
 
-I needed to implement an escalable flow from MQTT messages to a SQL database using Node-red, in order to adapt an embedded solution to an infrastructure currently used by the client.
+Last year I have been working on an embedded solution of remote sensing electric and physical parameters. In [this](https://sguarin.github.io/presentaciones/seguridad-mqtt/) presentation I talked about differents aproachs to correctly implement MQTT/TLS connection with authentication validation between an embedded solution and a broker. The examples were presented using ESP32 and the arduino framework.
 
-The following research consists in testing sql injections via MQTT using mosquitto, node-red and PostgreSQL but it can be extended to other implementations.
+The entire solution was originaly conceived as an embedded system, a python service and an ELK stack (Elasticsearch, Logstash and Kibana). Now I needed to implement an escalable flow from MQTT messages to a PostgreSQL database using Node-red, in order to adapt the embedded solution to an infrastructure currently used by the customer.
 
-I explored differents node-red flows implementations found on internet. The messesges are received via MQTT broker, processed in node-red and stored on a SQL database.
+The following research consists in testing sql injections via MQTT using Mosquitto, Node-red and PostgreSQL in a docker composed lab, but it can be extended to other implementations.  The messesges are received via MQTT broker, processed in Node-red and stored on a SQL database.
 
-I noticed that security on MQTT is not taken seriosly as http/web ones. There are a lots of free and open brokers where some attacker can view messages and try some injections.
+I explored differents Node-red flows implementations found on the customer and in different tutorial and resources found on internet.
+
+I noticed that security on MQTT is not taken seriosly as in http/web. There are a lots of free and open brokers sometimes used for production. That knowledge of valid messages are available to anyone subscribed to the topic. An attacker could view and use that kwnowledge to replay the messages trying some injections.
 
 After testing against sql injections, I will present some vulnerable scenarios, mitigations and good implementations.
 
@@ -17,9 +19,11 @@ The laboratory provided in this repository requires docker-compose, and instanti
 * Node-red without authentication exposed in port 1881
 * Postgresql with with a testing database smr exposed in port 5433., accesed with user:smmruser, and password:smmruser00
 
+All services are exposed for academic testing purposes. You can use or adapt this lab, to test your implementations.
+
 ## Starting environment
 
-You need to install mosquitto or mosquitto_client on your computer.
+You can run the clients inside the container or you can install mosquitto and postgresql client on your computer. The commands presented uses the second aproach.
 
 For each test, you can reset and start a fresh scenario by stopping (CTRL-C on docker-compose terminal) and running again:
 
@@ -109,35 +113,72 @@ You can try the same MQTT messages on previous test but on topic test2 instead. 
 
 ![Test 2](assets/test3.png)
 
-Is an optional node-red module already installed on the lab:
-It works well on strings, but if you need to store numeric values you need to cast them.
+SQLString node is an optional node-red module already installed on the lab:
+It works well on strings, but if you need to store numeric values you need to cast them back.
 
 ![Test 3 code](assets/test3_code.png)
 
 This aproach handles all parameters as strings, then does quote escaping ('co2'' as 'co2\'') and finally construct the query.
 You can't use the dollar sign quote or other bypass techniques as it handles all the columns as strings adding two final quotes.
 
-Is not efficient because all the numeric values are treated as strings, so you need to cast them again to numeric.
+Is not very efficient because all the numeric values are treated as strings, so you need to cast them again back to numeric for proper storage.
 
 An attempt to an injection may cause some logging overloads. Nothing serious.
 
-I did not got an sql injection with this implementation.
+I could not got a succesfull sql injection with this implementation.
 
 ## Test 4: JSON + JS concatenation
 
 ![Test 4](assets/test4.png)
 
-Similar as the first case, but when I tried it, I was wondering if the json block will do some sanity checks. Unfortunately not.
+Similar as the first test case, but when I tried it, I was wondering if the json node block will do some sanity checks. Unfortunately not.
 
 ```
 mosquitto_pub -h localhost -p 1884 -t test4 -m '{"device":"ccs811","ts":"2021-04-18 01:33:57","sensor":"co2","co2":1559,"tvoc":212,"temp":31.61,"hum":59.83,"pres":101543.27}'
 ```
 
-
+Attack:
 
 ```
 mosquitto_pub -h localhost -p 1884 -t test4 -m '{"device":"ccs811","ts":"2021-04-18 01:33:57","sensor":"co2","co2":1559,"tvoc":212,"temp":31.61,"hum":59.83,"pres":"101543.27);delete from smr.air --"}'
 ```
 
-## Some of the resources
+## Test 5: JS Separate query from params
+
+![Test 4](assets/test5.png)
+
+Well, by definition this should be the first aproach. Separating the query from the parameters that can be injected from external entities is by definition the "defensive programming" against SQL injections.
+
+At the time of this writing, the documentation of [node-red-contrib-re-postgres](https://flows.nodered.org/node/node-red-contrib-re-postgres) mention this, but lacks of some examples.
+This is an example of building a dictionary with the parameters, and using it from the query. The dictionary keys can be referenced from the query as $key.
+
+![Test 4](assets/test5_code.png)
+
+
+Valid packet for testing:
+
+```
+mosquitto_pub -h localhost -p 1884 -t test4 -m '{"device":"ccs811","ts":"2021-04-18 01:33:57","sensor":"co2","co2":1559,"tvoc":212,"temp":31.61,"hum":59.83,"pres":101543.27}'
+```
+
+Rejected attacks:
+
+```
+mosquitto_pub -h localhost -p 1884 -t test5 -m '{"device":"ccs811","ts":"2021-04-18 01:33:57","sensor":"co2","co2":1559,"tvoc":212,"temp":31.61,"hum":59.83,"pres":"101543.27);delete from smr.air --"}'
+```
+
+You can also test some payloads near a string parameter verifying that commands can't be injected.
+
+```
+ ccs811 | 2021-04-18 01:33:57 |     |      |     | co2'); --     | 1559 |  212 | 31.61 | 59.83 | 101543.27 | 
+ ccs811 | 2021-04-18 01:33:57 |     |      |     | co2$$a$$); -- | 1559 |  212 | 31.61 | 59.83 | 101543.27 | 
+```
+
+## Conclusion
+
+In my opinion the last aproach is the more suitable for dealing with MQTT and storing in SQL databases besides is not very well documented.
+
+## References
+
+https://www.infigo.hr/files/INFIGO-TD-2009-04_PostgreSQL_injection_ENG.pdf
 
