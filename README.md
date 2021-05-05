@@ -6,9 +6,9 @@ Last year I have been working on an embedded solution of remote sensing electric
 
 The entire solution was originaly conceived as an embedded system, a python service and an ELK stack (Elasticsearch, Logstash and Kibana). I needed to implement an escalable flow from MQTT messages to a PostgreSQL database using Node-red, in order to adapt the embedded solution to an infrastructure currently used by the customer.
 
-The following research consists in testing sql injections via MQTT using Mosquitto, Node-red and PostgreSQL in a docker composed lab, but it can be extended to other implementations.  The messesges are received via MQTT broker, processed in Node-red and stored on a SQL database.
+The following research consists in testing sql injections via MQTT using Mosquitto, Node-red and PostgreSQL in a docker composed lab, but it can be extended to other implementations.  The messages are received via MQTT broker, processed in Node-red and stored on a SQL database.
 
-I explored differents Node-red flows found implemented on the customer and in different tutorials and resources found on internet.
+I explored differents Node-red flows found implemented on the customer and in different tutorials/resources found on internet.
 
 I noticed that security on MQTT is not taken seriously as in http/web. There are a lots of free and open brokers sometimes used for production. Knowledge of valid messages are available to anyone getting subscribed to the topic. An attacker could view and use that kwnowledge to replay the messages trying some injections.
 
@@ -93,7 +93,7 @@ mosquitto_pub -h localhost -p 1884 -t test1 -m "ccs811,2021-04-18 01:33:57,,,,co
 
 Of course there is no reflection neither a blind response on this injection, so you can't guess the table name. I choosed this payload for academic purpose, but there are lots of payloads from testing for admin privileges, using postgresql functions, etc.
 
-For example you can use pg_sleep to prevent the transaction from being commited inmediately, and get the thread and connection resource blocked in an iddle state for x seconds.
+For example you can use pg_sleep to prevent the transaction from being commited inmediately, getting the thread and connection resource blocked in an iddle state for x seconds.
 
 ```
 mosquitto_pub -h localhost -p 1884 -t test1 -m "ccs811,2021-04-18 01:33:57,,,,co2,1559,212,31.61,59.83,101543.27); select pg_sleep(60)--"
